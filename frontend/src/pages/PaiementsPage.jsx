@@ -1,8 +1,16 @@
+import { useEffect, useState } from "react";
 import AppLayout from "../components/layout/AppLayout";
 import PageHeader from "../components/common/PageHeader";
 import DataTable from "../components/common/DataTable";
+import LoadingMessage from "../components/common/LoadingMessage";
+import ErrorMessage from "../components/common/ErrorMessage";
+import { getPaiements } from "../api/paiementsApi";
 
 function PaiementsPage() {
+  const [paiements, setPaiements] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
   const columns = [
     { key: "apprenantNom", label: "Apprenant" },
     { key: "montant", label: "Montant" },
@@ -12,26 +20,32 @@ function PaiementsPage() {
     { key: "datePaiement", label: "Date" },
   ];
 
-  const data = [
-    {
-      id: "1",
-      apprenantNom: "Awa Diallo",
-      montant: "50000 FCFA",
-      modePaiement: "Wave",
-      referenceTransaction: "TXN-001",
-      statut: "PAYE",
-      datePaiement: "2026-04-22",
-    },
-    {
-      id: "2",
-      apprenantNom: "Moussa Ba",
-      montant: "40000 FCFA",
-      modePaiement: "Orange Money",
-      referenceTransaction: "TXN-002",
-      statut: "EN_ATTENTE",
-      datePaiement: "2026-04-21",
-    },
-  ];
+  useEffect(() => {
+    const fetchPaiements = async () => {
+      try {
+        const data = await getPaiements();
+
+        const formattedData = data.map((paiement) => ({
+          id: paiement.id,
+          apprenantNom: paiement.apprenantNom,
+          montant: paiement.montant,
+          modePaiement: paiement.modePaiement,
+          referenceTransaction: paiement.referenceTransaction,
+          statut: paiement.statut,
+          datePaiement: paiement.datePaiement,
+        }));
+
+        setPaiements(formattedData);
+      } catch (err) {
+        console.error(err);
+        setError("Impossible de charger les paiements.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPaiements();
+  }, []);
 
   return (
     <AppLayout>
@@ -39,7 +53,11 @@ function PaiementsPage() {
         title="Paiements"
         subtitle="Suivi des transactions et paiements"
       />
-      <DataTable columns={columns} data={data} />
+
+      {loading && <LoadingMessage message="Chargement des paiements..." />}
+      {error && <ErrorMessage message={error} />}
+
+      {!loading && !error && <DataTable columns={columns} data={paiements} />}
     </AppLayout>
   );
 }

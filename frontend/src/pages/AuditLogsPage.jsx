@@ -1,8 +1,16 @@
+import { useEffect, useState } from "react";
 import AppLayout from "../components/layout/AppLayout";
 import PageHeader from "../components/common/PageHeader";
 import DataTable from "../components/common/DataTable";
+import LoadingMessage from "../components/common/LoadingMessage";
+import ErrorMessage from "../components/common/ErrorMessage";
+import { getAuditLogs } from "../api/auditLogsApi";
 
 function AuditLogsPage() {
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
   const columns = [
     { key: "userName", label: "Utilisateur" },
     { key: "userEmail", label: "Email" },
@@ -12,26 +20,32 @@ function AuditLogsPage() {
     { key: "createdAt", label: "Date" },
   ];
 
-  const data = [
-    {
-      id: "1",
-      userName: "Hamidou Camara",
-      userEmail: "hamidou@test.com",
-      action: "LOGIN",
-      cible: "AUTH",
-      adresseIp: "127.0.0.1",
-      createdAt: "2026-04-22 12:30",
-    },
-    {
-      id: "2",
-      userName: "Awa Diallo",
-      userEmail: "awa@test.com",
-      action: "CREATE_INSCRIPTION",
-      cible: "INSCRIPTION",
-      adresseIp: "127.0.0.1",
-      createdAt: "2026-04-22 12:35",
-    },
-  ];
+  useEffect(() => {
+    const fetchLogs = async () => {
+      try {
+        const data = await getAuditLogs();
+
+        const formattedData = data.map((log) => ({
+          id: log.id,
+          userName: log.userName,
+          userEmail: log.userEmail,
+          action: log.action,
+          cible: log.cible,
+          adresseIp: log.adresseIp,
+          createdAt: log.createdAt,
+        }));
+
+        setLogs(formattedData);
+      } catch (err) {
+        console.error(err);
+        setError("Impossible de charger les logs d’audit.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLogs();
+  }, []);
 
   return (
     <AppLayout>
@@ -39,7 +53,11 @@ function AuditLogsPage() {
         title="Audit Logs"
         subtitle="Traçabilité des actions sensibles"
       />
-      <DataTable columns={columns} data={data} />
+
+      {loading && <LoadingMessage message="Chargement des logs d’audit..." />}
+      {error && <ErrorMessage message={error} />}
+
+      {!loading && !error && <DataTable columns={columns} data={logs} />}
     </AppLayout>
   );
 }

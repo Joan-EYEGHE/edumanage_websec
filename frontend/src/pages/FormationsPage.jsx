@@ -1,8 +1,16 @@
+import { useEffect, useState } from "react";
 import AppLayout from "../components/layout/AppLayout";
 import PageHeader from "../components/common/PageHeader";
 import DataTable from "../components/common/DataTable";
+import LoadingMessage from "../components/common/LoadingMessage";
+import ErrorMessage from "../components/common/ErrorMessage";
+import { getFormations } from "../api/formationsApi";
 
 function FormationsPage() {
+  const [formations, setFormations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
   const columns = [
     { key: "titre", label: "Titre" },
     { key: "description", label: "Description" },
@@ -11,24 +19,31 @@ function FormationsPage() {
     { key: "statut", label: "Statut" },
   ];
 
-  const data = [
-    {
-      id: "1",
-      titre: "Cybersécurité",
-      description: "Formation sur les normes et protocoles",
-      duree: "30 h",
-      prix: "50000 FCFA",
-      statut: "PUBLIEE",
-    },
-    {
-      id: "2",
-      titre: "Spring Boot",
-      description: "API sécurisées avec JWT",
-      duree: "20 h",
-      prix: "40000 FCFA",
-      statut: "BROUILLON",
-    },
-  ];
+  useEffect(() => {
+    const fetchFormations = async () => {
+      try {
+        const data = await getFormations();
+
+        const formattedData = data.map((formation) => ({
+          id: formation.id,
+          titre: formation.titre,
+          description: formation.description,
+          duree: formation.duree,
+          prix: formation.prix,
+          statut: formation.statut,
+        }));
+
+        setFormations(formattedData);
+      } catch (err) {
+        console.error(err);
+        setError("Impossible de charger les formations.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFormations();
+  }, []);
 
   return (
     <AppLayout>
@@ -36,7 +51,13 @@ function FormationsPage() {
         title="Formations"
         subtitle="Catalogue des formations disponibles"
       />
-      <DataTable columns={columns} data={data} />
+
+      {loading && <LoadingMessage message="Chargement des formations..." />}
+      {error && <ErrorMessage message={error} />}
+
+      {!loading && !error && (
+        <DataTable columns={columns} data={formations} />
+      )}
     </AppLayout>
   );
 }

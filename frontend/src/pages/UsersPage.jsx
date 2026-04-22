@@ -1,8 +1,16 @@
+import { useEffect, useState } from "react";
 import AppLayout from "../components/layout/AppLayout";
 import PageHeader from "../components/common/PageHeader";
 import DataTable from "../components/common/DataTable";
+import LoadingMessage from "../components/common/LoadingMessage";
+import ErrorMessage from "../components/common/ErrorMessage";
+import { getUsers } from "../api/usersApi";
 
 function UsersPage() {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
   const columns = [
     { key: "nom", label: "Nom" },
     { key: "prenom", label: "Prénom" },
@@ -12,26 +20,32 @@ function UsersPage() {
     { key: "actif", label: "Actif" },
   ];
 
-  const data = [
-    {
-      id: "1",
-      nom: "Camara",
-      prenom: "Hamidou",
-      email: "hamidou@test.com",
-      telephone: "770000000",
-      roles: "ADMIN",
-      actif: "Oui",
-    },
-    {
-      id: "2",
-      nom: "Diallo",
-      prenom: "Awa",
-      email: "awa@test.com",
-      telephone: "771111111",
-      roles: "APPRENANT",
-      actif: "Oui",
-    },
-  ];
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const data = await getUsers();
+
+        const formattedData = data.map((user) => ({
+          id: user.id,
+          nom: user.nom,
+          prenom: user.prenom,
+          email: user.email,
+          telephone: user.telephone,
+          roles: Array.isArray(user.roles) ? user.roles.join(", ") : "",
+          actif: user.actif ? "Oui" : "Non",
+        }));
+
+        setUsers(formattedData);
+      } catch (err) {
+        console.error(err);
+        setError("Impossible de charger les utilisateurs.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
 
   return (
     <AppLayout>
@@ -39,7 +53,11 @@ function UsersPage() {
         title="Utilisateurs"
         subtitle="Liste des comptes utilisateurs"
       />
-      <DataTable columns={columns} data={data} />
+
+      {loading && <LoadingMessage message="Chargement des utilisateurs..." />}
+      {error && <ErrorMessage message={error} />}
+
+      {!loading && !error && <DataTable columns={columns} data={users} />}
     </AppLayout>
   );
 }
