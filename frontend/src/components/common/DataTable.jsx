@@ -17,7 +17,7 @@ function DataTable({ columns, data }) {
               <tr key={row.id || index}>
                 {columns.map((col) => (
                   <td key={col.key} style={styles.td}>
-                    {row[col.key]}
+                    {col.render ? col.render(row) : row[col.key]}
                   </td>
                 ))}
               </tr>
@@ -56,6 +56,7 @@ const styles = {
   td: {
     padding: "1rem",
     borderBottom: "1px solid #f3f4f6",
+    verticalAlign: "middle",
   },
   empty: {
     textAlign: "center",

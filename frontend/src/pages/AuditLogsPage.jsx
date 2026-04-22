@@ -4,10 +4,13 @@ import PageHeader from "../components/common/PageHeader";
 import DataTable from "../components/common/DataTable";
 import LoadingMessage from "../components/common/LoadingMessage";
 import ErrorMessage from "../components/common/ErrorMessage";
+import Pagination from "../components/common/Pagination";
 import { getAuditLogs } from "../api/auditLogsApi";
 
 function AuditLogsPage() {
   const [logs, setLogs] = useState([]);
+  const [metadata, setMetadata] = useState(null);
+  const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -22,10 +25,13 @@ function AuditLogsPage() {
 
   useEffect(() => {
     const fetchLogs = async () => {
-      try {
-        const data = await getAuditLogs();
+      setLoading(true);
+      setError("");
 
-        const formattedData = data.map((log) => ({
+      try {
+        const result = await getAuditLogs({ page, size: 10 });
+
+        const formattedData = result.payload.map((log) => ({
           id: log.id,
           userName: log.userName,
           userEmail: log.userEmail,
@@ -36,16 +42,17 @@ function AuditLogsPage() {
         }));
 
         setLogs(formattedData);
+        setMetadata(result.metadata);
       } catch (err) {
         console.error(err);
-        setError("Impossible de charger les logs d’audit.");
+        setError(err.message || "Impossible de charger les logs d’audit.");
       } finally {
         setLoading(false);
       }
     };
 
     fetchLogs();
-  }, []);
+  }, [page]);
 
   return (
     <AppLayout>
@@ -57,7 +64,12 @@ function AuditLogsPage() {
       {loading && <LoadingMessage message="Chargement des logs d’audit..." />}
       {error && <ErrorMessage message={error} />}
 
-      {!loading && !error && <DataTable columns={columns} data={logs} />}
+      {!loading && !error && (
+        <>
+          <DataTable columns={columns} data={logs} />
+          <Pagination metadata={metadata} onPageChange={setPage} />
+        </>
+      )}
     </AppLayout>
   );
 }
