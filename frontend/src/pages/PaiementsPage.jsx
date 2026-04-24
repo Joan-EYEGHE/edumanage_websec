@@ -10,7 +10,15 @@ import Modal from "../components/common/Modal";
 import FormInput from "../components/common/FormInput";
 import FormSelect from "../components/common/FormSelect";
 import StatusBadge from "../components/common/StatusBadge";
-import { getPaiements, createPaiement } from "../api/paiementsApi";
+import ConfirmDialog from "../components/common/ConfirmDialog";
+import RowActions from "../components/common/RowActions";
+import {
+  getPaiements,
+  createPaiement,
+  updatePaiement,
+  deletePaiement,
+} from "../api/paiementsApi";
+import { getInscriptions } from "../api/inscriptionsApi";
 import { getReadableError } from "../utils/errorHandler";
 import { useAuth } from "../context/AuthContext";
 import { hasAnyRole } from "../utils/roles";
@@ -26,6 +34,11 @@ function PaiementsPage() {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [selectedItemId, setSelectedItemId] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+
+  const [inscriptionOptions, setInscriptionOptions] = useState([]);
 
   const [formData, setFormData] = useState({
     inscriptionId: "",
@@ -47,6 +60,17 @@ function PaiementsPage() {
       render: (row) => <StatusBadge value={row.statut} />,
     },
     { key: "datePaiement", label: "Date" },
+    {
+      key: "actions",
+      label: "Actions",
+      render: (row) =>
+        canManagePaiements ? (
+          <RowActions
+            onEdit={() => handleEdit(row)}
+            onDelete={() => handleDeleteClick(row.id)}
+          />
+        ) : null,
+    },
   ];
 
   const fetchPaiements = async () => {
@@ -62,6 +86,7 @@ function PaiementsPage() {
 
       const formattedData = result.payload.map((paiement) => ({
         id: paiement.id,
+        inscriptionId: paiement.inscriptionId,
         apprenantNom: paiement.apprenantNom,
         montant: paiement.montant,
         modePaiement: paiement.modePaiement,
@@ -79,9 +104,28 @@ function PaiementsPage() {
     }
   };
 
+  const fetchReferenceData = async () => {
+    try {
+      const result = await getInscriptions({ page: 0, size: 100 });
+
+      const options = result.payload.map((item) => ({
+        value: item.id,
+        label: `${item.apprenantNom} - ${item.formationTitre}`,
+      }));
+
+      setInscriptionOptions(options);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     fetchPaiements();
   }, [page, search]);
+
+  useEffect(() => {
+    fetchReferenceData();
+  }, []);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -97,16 +141,51 @@ function PaiementsPage() {
       modePaiement: "",
       referenceTransaction: "",
     });
+    setEditingId(null);
   };
 
-  const handleCreatePaiement = async (e) => {
+  const handleEdit = (row) => {
+    setEditingId(row.id);
+    setFormData({
+      inscriptionId: row.inscriptionId || "",
+      montant: row.montant || "",
+      modePaiement: row.modePaiement || "",
+      referenceTransaction: row.referenceTransaction || "",
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteClick = (id) => {
+    setSelectedItemId(id);
+    setIsConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      await deletePaiement(selectedItemId);
+      setSuccessMessage("Paiement supprimé avec succès.");
+      setIsConfirmOpen(false);
+      setSelectedItemId(null);
+      fetchPaiements();
+    } catch (err) {
+      setError(getReadableError(err));
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setSuccessMessage("");
 
     try {
-      await createPaiement(formData);
-      setSuccessMessage("Paiement créé avec succès.");
+      if (editingId) {
+        await updatePaiement(editingId, formData);
+        setSuccessMessage("Paiement modifié avec succès.");
+      } else {
+        await createPaiement(formData);
+        setSuccessMessage("Paiement créé avec succès.");
+      }
+
       setIsModalOpen(false);
       resetForm();
       fetchPaiements();
@@ -124,7 +203,10 @@ function PaiementsPage() {
           canManagePaiements ? (
             <button
               style={styles.primaryButton}
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => {
+                resetForm();
+                setIsModalOpen(true);
+              }}
             >
               + Nouveau paiement
             </button>
@@ -153,15 +235,16 @@ function PaiementsPage() {
 
       <Modal
         isOpen={isModalOpen}
-        title="Créer un paiement"
+        title={editingId ? "Modifier un paiement" : "Créer un paiement"}
         onClose={() => setIsModalOpen(false)}
       >
-        <form onSubmit={handleCreatePaiement} style={styles.form}>
-          <FormInput
-            label="Inscription ID"
+        <form onSubmit={handleSubmit} style={styles.form}>
+          <FormSelect
+            label="Inscription"
             name="inscriptionId"
             value={formData.inscriptionId}
             onChange={handleChange}
+            options={inscriptionOptions}
           />
 
           <FormInput
@@ -193,10 +276,18 @@ function PaiementsPage() {
           />
 
           <button type="submit" style={styles.primaryButton}>
-            Enregistrer
+            {editingId ? "Mettre à jour" : "Enregistrer"}
           </button>
         </form>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={isConfirmOpen}
+        title="Supprimer le paiement"
+        message="Voulez-vous vraiment supprimer ce paiement ?"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setIsConfirmOpen(false)}
+      />
     </AppLayout>
   );
 }

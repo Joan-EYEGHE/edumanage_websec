@@ -26,3 +26,8 @@ export const updateInscription = async (id, inscriptionData) => {
   const response = await api.put(`/inscriptions/${id}`, inscriptionData);
   return response.data;
 };
+
+export const deleteInscription = async (id) => {
+  const response = await api.delete(`/inscriptions/${id}`);
+  return response.data;
+};

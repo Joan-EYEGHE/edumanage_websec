@@ -1,13 +1,41 @@
 import { NavLink } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import { hasAnyRole } from "../../utils/roles";
 
 function Sidebar() {
+  const { user } = useAuth();
+
   const menuItems = [
-    { label: "Dashboard", path: "/dashboard" },
-    { label: "Utilisateurs", path: "/users" },
-    { label: "Formations", path: "/formations" },
-    { label: "Inscriptions", path: "/inscriptions" },
-    { label: "Paiements", path: "/paiements" },
-    { label: "Audit Logs", path: "/audit-logs" },
+    {
+      label: "Dashboard",
+      path: "/dashboard",
+      visible: true,
+    },
+    {
+      label: "Utilisateurs",
+      path: "/users",
+      visible: hasAnyRole(user, ["ADMIN", "GESTIONNAIRE"]),
+    },
+    {
+      label: "Formations",
+      path: "/formations",
+      visible: hasAnyRole(user, ["ADMIN", "GESTIONNAIRE", "FORMATEUR"]),
+    },
+    {
+      label: "Inscriptions",
+      path: "/inscriptions",
+      visible: hasAnyRole(user, ["ADMIN", "GESTIONNAIRE", "FORMATEUR"]),
+    },
+    {
+      label: "Paiements",
+      path: "/paiements",
+      visible: hasAnyRole(user, ["ADMIN", "GESTIONNAIRE"]),
+    },
+    {
+      label: "Audit Logs",
+      path: "/audit-logs",
+      visible: hasAnyRole(user, ["ADMIN"]),
+    },
   ];
 
   return (
@@ -15,18 +43,20 @@ function Sidebar() {
       <div style={styles.logo}>EduManage Secure</div>
 
       <nav style={styles.nav}>
-        {menuItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            style={({ isActive }) => ({
-              ...styles.link,
-              ...(isActive ? styles.activeLink : {}),
-            })}
-          >
-            {item.label}
-          </NavLink>
-        ))}
+        {menuItems
+          .filter((item) => item.visible)
+          .map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              style={({ isActive }) => ({
+                ...styles.link,
+                ...(isActive ? styles.activeLink : {}),
+              })}
+            >
+              {item.label}
+            </NavLink>
+          ))}
       </nav>
     </aside>
   );

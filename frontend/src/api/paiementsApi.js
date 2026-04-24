@@ -26,3 +26,8 @@ export const updatePaiement = async (id, paiementData) => {
   const response = await api.put(`/paiements/${id}`, paiementData);
   return response.data;
 };
+
+export const deletePaiement = async (id) => {
+  const response = await api.delete(`/paiements/${id}`);
+  return response.data;
+};

@@ -33,7 +33,7 @@ function UsersPage() {
     email: "",
     telephone: "",
     password: "",
-    role: "",
+    role: [],
   });
 
   const canManageUsers = hasAnyRole(user, ["ADMIN", "GESTIONNAIRE"]);
@@ -86,11 +86,21 @@ function UsersPage() {
   }, [page, search]);
 
   const handleChange = (e) => {
+  const { name, value } = e.target;
+
+  if (name === "roles") {
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      roles: value ? [value] : [],
     }));
-  };
+    return;
+  }
+
+  setFormData((prev) => ({
+    ...prev,
+    [name]: value,
+  }));
+};
 
   const resetForm = () => {
     setFormData({
@@ -99,7 +109,7 @@ function UsersPage() {
       email: "",
       telephone: "",
       password: "",
-      role: "",
+      role: [],
     });
   };
 
@@ -164,17 +174,15 @@ function UsersPage() {
           <FormInput label="Téléphone" name="telephone" value={formData.telephone} onChange={handleChange} />
           <FormInput label="Mot de passe" name="password" type="password" value={formData.password} onChange={handleChange} />
           <FormSelect
-            label="Rôle"
-            name="role"
-            value={formData.role}
-            onChange={handleChange}
-            options={[
-              { value: "ADMIN", label: "ADMIN" },
-              { value: "GESTIONNAIRE", label: "GESTIONNAIRE" },
-              { value: "FORMATEUR", label: "FORMATEUR" },
-              { value: "APPRENANT", label: "APPRENANT" },
-            ]}
-          />
+  label="Rôle"
+  name="roles"
+  value={formData.roles[0] || ""}
+  onChange={handleChange}
+  options={[
+    { value: "FORMATEUR", label: "FORMATEUR" },
+    { value: "APPRENANT", label: "APPRENANT" },
+  ]}
+/>
 
           <button type="submit" style={styles.primaryButton}>
             Enregistrer

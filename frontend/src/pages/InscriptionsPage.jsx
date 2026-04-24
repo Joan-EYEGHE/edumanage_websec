@@ -7,9 +7,18 @@ import ErrorMessage from "../components/common/ErrorMessage";
 import Pagination from "../components/common/Pagination";
 import SearchBar from "../components/common/SearchBar";
 import Modal from "../components/common/Modal";
-import FormInput from "../components/common/FormInput";
+import FormSelect from "../components/common/FormSelect";
 import StatusBadge from "../components/common/StatusBadge";
-import { getInscriptions, createInscription } from "../api/inscriptionsApi";
+import ConfirmDialog from "../components/common/ConfirmDialog";
+import RowActions from "../components/common/RowActions";
+import {
+  getInscriptions,
+  createInscription,
+  updateInscription,
+  deleteInscription,
+} from "../api/inscriptionsApi";
+import { getUsers } from "../api/usersApi";
+import { getFormations } from "../api/formationsApi";
 import { getReadableError } from "../utils/errorHandler";
 import { useAuth } from "../context/AuthContext";
 import { hasAnyRole } from "../utils/roles";
@@ -25,6 +34,12 @@ function InscriptionsPage() {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [selectedItemId, setSelectedItemId] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+
+  const [apprenantOptions, setApprenantOptions] = useState([]);
+  const [formationOptions, setFormationOptions] = useState([]);
 
   const [formData, setFormData] = useState({
     apprenantId: "",
@@ -46,6 +61,17 @@ function InscriptionsPage() {
       label: "Statut",
       render: (row) => <StatusBadge value={row.statut} />,
     },
+    {
+      key: "actions",
+      label: "Actions",
+      render: (row) =>
+        canManageInscriptions ? (
+          <RowActions
+            onEdit={() => handleEdit(row)}
+            onDelete={() => handleDeleteClick(row.id)}
+          />
+        ) : null,
+    },
   ];
 
   const fetchInscriptions = async () => {
@@ -61,6 +87,8 @@ function InscriptionsPage() {
 
       const formattedData = result.payload.map((inscription) => ({
         id: inscription.id,
+        apprenantId: inscription.apprenantId,
+        formationId: inscription.formationId,
         apprenantNom: inscription.apprenantNom,
         formationTitre: inscription.formationTitre,
         dateInscription: inscription.dateInscription,
@@ -76,9 +104,37 @@ function InscriptionsPage() {
     }
   };
 
+  const fetchReferenceData = async () => {
+    try {
+      const usersResult = await getUsers({ page: 0, size: 100 });
+      const formationsResult = await getFormations({ page: 0, size: 100 });
+
+      const apprenants = usersResult.payload
+        .filter((item) => Array.isArray(item.roles) && item.roles.includes("APPRENANT"))
+        .map((item) => ({
+          value: item.id,
+          label: `${item.prenom} ${item.nom} (${item.email})`,
+        }));
+
+      const formations = formationsResult.payload.map((item) => ({
+        value: item.id,
+        label: item.titre,
+      }));
+
+      setApprenantOptions(apprenants);
+      setFormationOptions(formations);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     fetchInscriptions();
   }, [page, search]);
+
+  useEffect(() => {
+    fetchReferenceData();
+  }, []);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -92,16 +148,49 @@ function InscriptionsPage() {
       apprenantId: "",
       formationId: "",
     });
+    setEditingId(null);
   };
 
-  const handleCreateInscription = async (e) => {
+  const handleEdit = (row) => {
+    setEditingId(row.id);
+    setFormData({
+      apprenantId: row.apprenantId || "",
+      formationId: row.formationId || "",
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteClick = (id) => {
+    setSelectedItemId(id);
+    setIsConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      await deleteInscription(selectedItemId);
+      setSuccessMessage("Inscription supprimée avec succès.");
+      setIsConfirmOpen(false);
+      setSelectedItemId(null);
+      fetchInscriptions();
+    } catch (err) {
+      setError(getReadableError(err));
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setSuccessMessage("");
 
     try {
-      await createInscription(formData);
-      setSuccessMessage("Inscription créée avec succès.");
+      if (editingId) {
+        await updateInscription(editingId, formData);
+        setSuccessMessage("Inscription modifiée avec succès.");
+      } else {
+        await createInscription(formData);
+        setSuccessMessage("Inscription créée avec succès.");
+      }
+
       setIsModalOpen(false);
       resetForm();
       fetchInscriptions();
@@ -119,7 +208,10 @@ function InscriptionsPage() {
           canManageInscriptions ? (
             <button
               style={styles.primaryButton}
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => {
+                resetForm();
+                setIsModalOpen(true);
+              }}
             >
               + Nouvelle inscription
             </button>
@@ -148,29 +240,39 @@ function InscriptionsPage() {
 
       <Modal
         isOpen={isModalOpen}
-        title="Créer une inscription"
+        title={editingId ? "Modifier une inscription" : "Créer une inscription"}
         onClose={() => setIsModalOpen(false)}
       >
-        <form onSubmit={handleCreateInscription} style={styles.form}>
-          <FormInput
-            label="Apprenant ID"
+        <form onSubmit={handleSubmit} style={styles.form}>
+          <FormSelect
+            label="Apprenant"
             name="apprenantId"
             value={formData.apprenantId}
             onChange={handleChange}
+            options={apprenantOptions}
           />
 
-          <FormInput
-            label="Formation ID"
+          <FormSelect
+            label="Formation"
             name="formationId"
             value={formData.formationId}
             onChange={handleChange}
+            options={formationOptions}
           />
 
           <button type="submit" style={styles.primaryButton}>
-            Enregistrer
+            {editingId ? "Mettre à jour" : "Enregistrer"}
           </button>
         </form>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={isConfirmOpen}
+        title="Supprimer l’inscription"
+        message="Voulez-vous vraiment supprimer cette inscription ?"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setIsConfirmOpen(false)}
+      />
     </AppLayout>
   );
 }

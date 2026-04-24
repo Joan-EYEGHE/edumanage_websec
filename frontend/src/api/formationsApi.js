@@ -26,3 +26,8 @@ export const updateFormation = async (id, formationData) => {
   const response = await api.put(`/formations/${id}`, formationData);
   return response.data;
 };
+
+export const deleteFormation = async (id) => {
+  const response = await api.delete(`/formations/${id}`);
+  return response.data;
+};
