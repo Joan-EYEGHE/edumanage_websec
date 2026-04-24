@@ -1,0 +1,17 @@
+logging:
+  file:
+    name: logs/edumanage-prod.log
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB
+      max-history: 30
+      file-name-pattern: logs/archived/prod-%d{yyyy-MM-dd}.%i.log
+
+  level:
+    root: WARN
+    ism.dakar.edumanage: INFO
+    org.springframework.security: WARN
+
+  pattern:
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{user}] %logger{36} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss} %-5level [%X{user}] %logger{15} - %msg%n"

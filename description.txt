@@ -1,0 +1,364 @@
+________________________________________
+Sujet :
+EduManage Secure
+Application web sécurisée de gestion des apprenants, paiements et accès pédagogiques
+Idée du projet :
+C’est une application métier full-stack qui permet à un centre de formation de :
+•	gérer les comptes utilisateurs
+•	gérer les rôles et permissions
+•	inscrire des apprenants
+•	enregistrer des paiements
+•	donner accès à des ressources selon le rôle
+•	tracer les actions sensibles
+•	protéger les données personnelles et financières
+Pourquoi ce sujet est bon
+Il colle parfaitement à la logique du cours :
+•	application métier full-stack
+•	authentification sécurisée
+•	gestion des rôles
+•	chiffrement des données sensibles
+•	audit, logs, observabilité
+•	conformité réglementaire
+Et il s’aligne avec les attentes du module sur les exigences fonctionnelles, l’architecture cible, le plan sécurité, le MVP et le plan projet. Le document de livrables demande bien ces éléments, avec sécurité intégrée dès la conception.
+Le support du cours insiste aussi sur CIA, STRIDE, OWASP Top 10, DevSecOps, JWT/OAuth2, sécurité des API et pipeline sécurisé.
+________________________________________
+Ce que fera l’application
+Utilisateurs
+•	Administrateur
+•	Gestionnaire
+•	Formateur
+•	Apprenant
+Fonctionnalités principales
+•	inscription / connexion
+•	authentification sécurisée
+•	gestion des rôles
+•	création et gestion des apprenants
+•	gestion des formations
+•	enregistrement des paiements
+•	accès aux contenus selon le rôle
+•	journal d’audit
+•	tableau de bord simple
+Données sensibles à protéger
+•	nom, prénom, email, téléphone
+•	mot de passe
+•	historique de paiement
+•	justificatifs ou références de transaction
+•	logs d’accès
+•	rôles et permissions
+________________________________________
+Version A+ du projet : ce que nous allons montrer
+1. Partie métier
+Une vraie application utile, pas juste un login/logout.
+2. Partie sécurité
+Nous montrons clairement :
+•	RBAC
+•	JWT
+•	hashage des mots de passe
+•	chiffrement de certaines données
+•	logs d’audit
+•	validation des entrées
+•	protection API
+•	scan SAST / DAST
+•	reverse proxy NGINX
+•	monitoring
+3. Partie méthode
+Nous montrons que nous avons suivi une logique :
+•	exigences
+•	architecture
+•	risques
+•	développement
+•	tests
+•	audit
+•	conformité
+C’est exactement ce que le prof veut voir. Les livrables du module montrent qu’un projet réussi doit être fonctionnel, sécurisé, conforme et piloté.
+________________________________________
+Comment intégrer les 3 stages dans ce projet
+Stage 1 — DevSecOps & Pipeline
+Nous développons l’application et nous sécurisons le processus de développement :
+•	dépôt GitHub
+•	pipeline CI/CD
+•	SAST avec SonarQube
+•	scan dépendances avec OWASP Dependency-Check ou Trivy
+•	tests automatisés
+•	DAST avec OWASP ZAP
+Stage 2 — IAM & Secrets
+Nous ajoutons la sécurité d’accès :
+•	Spring Security
+•	JWT
+•	rôles : ADMIN / GESTIONNAIRE / FORMATEUR / APPRENANT
+•	permissions par endpoint
+•	gestion des secrets via variables d’environnement ou Vault si possible
+Stage 3 — Infra, Observabilité & Audit
+Nous ajoutons la sécurité “production” :
+•	NGINX reverse proxy
+•	logs d’audit
+•	monitoring
+•	dashboard simple Grafana/Prometheus si possible
+•	mini audit sécurité
+•	plan de remédiation
+________________________________________
+Structure complète du document
+Je te propose une structure propre, universitaire et professionnelle.
+Page de garde
+•	titre du projet
+•	noms des 3 membres
+•	matière
+•	professeur
+•	année académique
+Sommaire
+1. Introduction générale
+•	contexte
+•	problème
+•	intérêt du projet
+•	objectif général
+•	objectifs spécifiques
+2. Présentation du projet
+•	nom de l’application
+•	type d’application
+•	utilisateurs cibles
+•	besoins métier couverts
+•	périmètre du projet
+3. Exigences fonctionnelles
+Ici vous répondez au livrable L1. Le document de livrables demande des user stories, RBAC, confidentialité, traçabilité et exigences de sécurité intégrées.
+À mettre :
+•	liste des acteurs
+•	user stories
+•	cas d’utilisation
+•	matrice rôles / permissions
+•	données sensibles
+•	besoins de traçabilité
+Exemples de user stories
+•	En tant qu’apprenant, je veux me connecter afin d’accéder à mes formations.
+•	En tant que gestionnaire, je veux enregistrer un paiement afin de valider une inscription.
+•	En tant qu’administrateur, je veux attribuer des rôles afin de contrôler les accès.
+•	En tant que formateur, je veux consulter uniquement mes apprenants afin de respecter le moindre privilège.
+4. Exigences non fonctionnelles et techniques
+Cela répond au livrable L2. Le support des livrables mentionne performances, maintenance, observabilité, authentification MFA, chiffrement, gestion de session et tests de sécurité.
+À mettre :
+•	sécurité
+•	performance
+•	disponibilité
+•	journalisation
+•	maintenance
+•	observabilité
+Exemples
+•	temps de réponse cible < 2 secondes pour les pages principales
+•	toutes les routes sensibles protégées
+•	mots de passe hashés en BCrypt
+•	expiration des JWT
+•	logs des actions critiques
+•	validation serveur obligatoire
+5. Analyse des risques
+Ici vous utilisez le cours.
+À mettre :
+•	actifs
+•	menaces
+•	vulnérabilités
+•	impacts
+•	contre-mesures
+Outils d’analyse à intégrer
+•	triade CIA
+•	STRIDE
+•	DREAD ou probabilité × impact
+Exemple simple
+•	menace : usurpation d’identité
+•	risque : accès illégitime à un dossier apprenant
+•	impact : fuite de données personnelles
+•	mesure : JWT + rôle + contrôle d’accès côté serveur + logs
+6. Architecture cible
+Cela répond au livrable L4. Le document demande 4 volets : fonctionnelle, applicative, technique et sécurité.
+6.1 Architecture fonctionnelle
+•	acteurs
+•	flux métier
+•	parcours utilisateur
+6.2 Architecture applicative
+•	frontend
+•	backend
+•	base de données
+•	service d’authentification
+•	journalisation
+6.3 Architecture technique
+•	React
+•	Spring Boot
+•	PostgreSQL
+•	Docker
+•	NGINX
+6.4 Architecture sécurité
+•	JWT
+•	RBAC
+•	chiffrement
+•	logs
+•	reverse proxy
+•	règles CORS
+•	validation des entrées
+•	protection des secrets
+7. Choix technologiques
+Cela répond au livrable L5. Le document de cours recommande une stack maintenue, avec sécurité moderne et auditabilité.
+Stack recommandée
+•	Frontend : React
+•	Backend : Spring Boot
+•	Base de données : PostgreSQL
+•	Authentification : Spring Security + JWT
+•	Hashage : BCrypt
+•	Conteneurisation : Docker
+•	Reverse proxy : NGINX
+•	CI/CD : GitHub Actions
+•	SAST : SonarQube
+•	DAST : OWASP ZAP
+•	Scan dépendances : Trivy ou OWASP Dependency-Check
+•	Monitoring : Prometheus + Grafana si possible
+8. Plan sécurité et conformité
+Cela répond au livrable L6. Le document exige de traiter la conformité dès la conception, notamment CDP et principes de protection des données.
+À mettre :
+•	données personnelles traitées
+•	finalité de collecte
+•	minimisation des données
+•	durée de conservation
+•	droits d’accès
+•	chiffrement
+•	journalisation
+•	protection des sessions
+•	conformité CDP
+•	si vous gardez la partie paiement : mention BCEAO/LCB-FT de manière théorique seulement
+9. Cahier des charges MVP sécurisé
+Cela répond au livrable L7. Le document précise que le MVP doit déjà inclure MFA, HTTPS, hachage, session sécurisée, logs, RBAC et audit initial.
+MVP minimal proposé
+•	inscription
+•	connexion
+•	JWT
+•	gestion des rôles
+•	CRUD apprenants
+•	enregistrement paiement
+•	dashboard admin
+•	journal d’audit
+•	scan sécurité de base
+•	reverse proxy NGINX
+10. Implémentation des 3 stages
+•	stage 1 : pipeline + tests + scans
+•	stage 2 : auth + rôles + secrets
+•	stage 3 : NGINX + monitoring + audit
+11. Tests et validation
+•	tests fonctionnels
+•	tests sécurité
+•	tests d’accès par rôle
+•	test d’injection simple
+•	test de token expiré
+•	test d’accès interdit
+•	résultat SonarQube
+•	résultat ZAP
+12. Plan projet et répartition
+Cela répond au livrable L8. Le document demande équipe, jalons, rôles, sécurité à chaque sprint.
+13. Difficultés rencontrées
+•	configuration JWT
+•	CORS
+•	rôles
+•	pipeline
+•	logs
+•	scans
+14. Conclusion
+•	bilan
+•	apports du projet
+•	limites
+•	améliorations futures
+15. Annexes
+•	captures d’écran
+•	diagrammes UML
+•	matrice rôles / permissions
+•	résultats SonarQube
+•	résultats ZAP
+•	extraits de code
+________________________________________
+Répartition des tâches pour 3 personnes
+Je te propose une répartition intelligente, équilibrée et crédible.
+Personne 1 — Chef de projet + Documentation + Conformité
+Missions
+•	cadrage du projet
+•	introduction, objectifs, besoins
+•	exigences fonctionnelles
+•	user stories
+•	matrice des rôles
+•	conformité réglementaire
+•	rédaction finale du rapport
+•	préparation de la présentation orale
+Livrables gérés
+•	sections 1, 2, 3, 8, 12, 14
+________________________________________
+Personne 2 — Backend + Sécurité IAM
+Missions
+•	Spring Boot
+•	Spring Security
+•	JWT
+•	RBAC
+•	endpoints sécurisés
+•	chiffrement / hashage
+•	journalisation des actions sensibles
+•	tests backend
+Livrables gérés
+•	sections 4, 6, 7, 10, 11
+•	stage 2 principalement
+________________________________________
+Personne 3 — Frontend + DevSecOps + Infra
+Missions
+•	interface React
+•	intégration avec API
+•	pipeline GitHub Actions
+•	SonarQube / Trivy / Dependency-Check
+•	OWASP ZAP
+•	NGINX reverse proxy
+•	observabilité / monitoring
+•	captures techniques
+Livrables gérés
+•	sections 5, 9, 10, 11, annexes
+•	stage 1 et stage 3 principalement
+________________________________________
+Répartition par sprint
+Sprint 1
+•	choix du sujet
+•	acteurs
+•	user stories
+•	architecture
+•	setup GitHub
+•	structure projet
+Sprint 2
+•	backend auth
+•	frontend login
+•	rôles
+•	base de données
+•	CRUD apprenants
+Sprint 3
+•	paiements
+•	logs d’audit
+•	sécurité API
+•	chiffrement / hashage
+•	tests accès
+Sprint 4
+•	pipeline CI/CD
+•	SonarQube
+•	Trivy / Dependency-Check
+•	OWASP ZAP
+•	NGINX
+Sprint 5
+•	audit final
+•	correction
+•	rapport
+•	slides
+•	démo
+________________________________________
+À ne pas oublier
+•	diagramme d’architecture propre
+•	matrice rôles / permissions
+•	petite analyse STRIDE
+•	capture SonarQube
+•	capture ZAP
+•	exemple de JWT
+•	justification du chiffrement
+•	journal d’audit lisible
+•	conclusion avec limites et améliorations
+Bonus A+
+•	MFA simulé ou au moins prévu dans le design
+•	Docker compose
+•	refresh token
+•	audit log consultable
+•	Prometheus/Grafana
+•	NGINX avec rate limiting
+•	plan de remédiation après audit

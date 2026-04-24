@@ -1,0 +1,79 @@
+1. UserDTO [model utilisateur pour les
+details]
+● id : UUID
+● nom : String
+● prenom : String
+● email : String
+● telephone : String
+● actif : Boolean
+● roleIds : List<UUID>
+● roles : List<String>
+● createdAt : LocalDateTime
+
+2. FormationDTO [dto de la creation et
+recuperation de la formation]
+● id : UUID
+● formateurId : UUID [formateur de la formation]
+● afficheUrl: String
+● titre : String
+● description : String
+● duree : Integer
+● prix : BigDecimal
+● statut : String
+● actif : Boolean
+● createdAt : LocalDateTime
+
+3. InscriptionDTO [liste des inscrits]
+● id : UUID
+● apprenantId : UUID
+● apprenantNom : String
+● formationId : UUID
+● formationTitre : String
+● dateInscription : LocalDateTime
+● statut : String
+
+4. InscriptionRequestDTO [inscription de
+l’apprenant a une formation]
+● apprenantId : UUID
+● formationId : UUID
+● montant : BidDecimal
+● modePaiement : String
+
+5. PaiementResponseDTO [liste des
+paiement]
+● id : UUID
+● inscriptionId : UUID
+● apprenantNom : String
+● montant : BigDecimal
+● modePaiement : String
+● referenceTransaction : String
+● statut : String
+● datePaiement : LocalDateTime
+
+6. AuditLogResponseDTO [liste des logs]
+● id : UUID
+● userEmail : String
+● userName : String
+● action : String
+● cible : String
+● details : String
+● adresseIp : String
+● createdAt : LocalDateTime
+
+7. LoginDTO [connexion user]
+● email : String
+● password : String
+
+8. RegisterDTO [inscription utilisateur et
+creation de gestionnaire pour l’admin]
+● nom : String
+● prenom : String
+● email : String
+● password : String
+
+9. AuthResponseDTO [reponse de
+connexion]
+● accessToken : String
+● tokenType : String
+● expiresIn : Long
+● user : UserDTO
