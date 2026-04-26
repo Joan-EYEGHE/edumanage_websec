@@ -10,6 +10,7 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     setLoading(true);
+
     try {
       const data = await loginUser({ email, password });
       saveAuthData(data);

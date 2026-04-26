@@ -1,0 +1,44 @@
+server:
+  port: 8080
+  forward-headers-strategy: framework
+  servlet:
+    context-path: /api/
+
+cloudinary:    # serveur pour la gestion des images de la formation
+  cloud-name: dj82ai02y
+  api-key: 671734865198268
+  api-secret: RGqqismZtqoHpZ4i6FJ_WamEUfc
+
+spring:
+  profiles:
+    active: dev
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 20MB
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+  application:
+    name: edumanage
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v1/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+    import: classpath:logs-dev.yml
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+    import: classpath:logs-prod.yml

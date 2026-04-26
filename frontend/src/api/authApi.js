@@ -1,24 +1,6 @@
-export const loginUser = async (loginData) => {
-  console.log("Login data envoyée :", loginData);
+import api from "./axios";
 
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        accessToken: "fake-jwt-token-123456",
-        tokenType: "Bearer",
-        expiresIn: 3600,
-        user: {
-          id: "123e4567-e89b-12d3-a456-426614174000",
-          nom: "Edumanage",
-          prenom: "Secure",
-          email: loginData.email,
-          telephone: "770000000",
-          actif: true,
-          roleIds: [],
-          roles: ["ADMIN"],
-          createdAt: "2026-04-22T10:00:00",
-        },
-      });
-    }, 1000);
-  });
+export const loginUser = async (loginData) => {
+  const response = await api.post("/users/login", loginData);
+  return response.data.payload;
 };
