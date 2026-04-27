@@ -8,7 +8,7 @@ import Pagination from "../components/common/Pagination";
 import SearchBar from "../components/common/SearchBar";
 import Modal from "../components/common/Modal";
 import FormSelect from "../components/common/FormSelect";
-import StatusBadge from "../components/common/StatusBadge";
+import FormInput from "../components/common/FormInput";
 import ConfirmDialog from "../components/common/ConfirmDialog";
 import RowActions from "../components/common/RowActions";
 import {
@@ -44,10 +44,12 @@ function InscriptionsPage() {
   const [formData, setFormData] = useState({
     apprenantId: "",
     formationId: "",
+    montant: "",
+    modePaiement: "",
   });
 
   const canManageInscriptions = hasAnyRole(user, [
-    "ADMIN",
+    "ADMINISTRATEUR",
     "GESTIONNAIRE",
     "FORMATEUR",
   ]);
@@ -56,11 +58,7 @@ function InscriptionsPage() {
     { key: "apprenantNom", label: "Apprenant" },
     { key: "formationTitre", label: "Formation" },
     { key: "dateInscription", label: "Date inscription" },
-    {
-      key: "statut",
-      label: "Statut",
-      render: (row) => <StatusBadge value={row.statut} />,
-    },
+    { key: "modePaiement", label: "Mode paiement" },
     {
       key: "actions",
       label: "Actions",
@@ -74,6 +72,20 @@ function InscriptionsPage() {
     },
   ];
 
+  const formatDate = (value) => {
+    if (!value) return "-";
+
+    const text = String(value);
+
+    if (text.includes("-")) return text;
+
+    if (text.length === 8) {
+      return `${text.slice(0, 4)}-${text.slice(4, 6)}-${text.slice(6, 8)}`;
+    }
+
+    return text;
+  };
+
   const fetchInscriptions = async () => {
     setLoading(true);
     setError("");
@@ -82,17 +94,17 @@ function InscriptionsPage() {
       const result = await getInscriptions({
         page,
         size: 10,
-        keyword: search,
       });
 
       const formattedData = result.payload.map((inscription) => ({
         id: inscription.id,
         apprenantId: inscription.apprenantId,
         formationId: inscription.formationId,
-        apprenantNom: inscription.apprenantNom,
-        formationTitre: inscription.formationTitre,
-        dateInscription: inscription.dateInscription,
-        statut: inscription.statut,
+        apprenantNom: inscription.apprenantNom || "-",
+        formationTitre: inscription.formationTitre || "-",
+        dateInscription: formatDate(inscription.dateInscription),
+        montant: inscription.montant ?? 0,
+        modePaiement: inscription.modePaiement || "-",
       }));
 
       setInscriptions(formattedData);
@@ -110,7 +122,9 @@ function InscriptionsPage() {
       const formationsResult = await getFormations({ page: 0, size: 100 });
 
       const apprenants = usersResult.payload
-        .filter((item) => Array.isArray(item.roles) && item.roles.includes("APPRENANT"))
+        .filter(
+          (item) => Array.isArray(item.roles) && item.roles.includes("APPRENANT")
+        )
         .map((item) => ({
           value: item.id,
           label: `${item.prenom} ${item.nom} (${item.email})`,
@@ -124,13 +138,13 @@ function InscriptionsPage() {
       setApprenantOptions(apprenants);
       setFormationOptions(formations);
     } catch (err) {
-      console.error(err);
+      console.error("Erreur chargement listes :", err);
     }
   };
 
   useEffect(() => {
     fetchInscriptions();
-  }, [page, search]);
+  }, [page]);
 
   useEffect(() => {
     fetchReferenceData();
@@ -147,6 +161,8 @@ function InscriptionsPage() {
     setFormData({
       apprenantId: "",
       formationId: "",
+      montant: "",
+      modePaiement: "",
     });
     setEditingId(null);
   };
@@ -156,9 +172,15 @@ function InscriptionsPage() {
     setFormData({
       apprenantId: row.apprenantId || "",
       formationId: row.formationId || "",
+      montant: row.montant || "",
+      modePaiement: row.modePaiement || "",
     });
     setIsModalOpen(true);
   };
+
+  const filteredInscriptions = inscriptions.filter((item) =>
+  Object.values(item).join(" ").toLowerCase().includes(search.toLowerCase())
+);
 
   const handleDeleteClick = (id) => {
     setSelectedItemId(id);
@@ -171,7 +193,7 @@ function InscriptionsPage() {
       setSuccessMessage("Inscription supprimée avec succès.");
       setIsConfirmOpen(false);
       setSelectedItemId(null);
-      fetchInscriptions();
+      await fetchInscriptions();
     } catch (err) {
       setError(getReadableError(err));
     }
@@ -182,19 +204,39 @@ function InscriptionsPage() {
     setError("");
     setSuccessMessage("");
 
+    if (!formData.apprenantId || !formData.formationId || !formData.modePaiement) {
+      setError("Veuillez sélectionner un apprenant, une formation et un mode de paiement.");
+      return;
+    }
+
+    const payload = {
+      apprenantId: parseInt(formData.apprenantId, 10),
+      formationId: parseInt(formData.formationId, 10),
+      montant: formData.montant ? parseFloat(formData.montant) : 0,
+      modePaiement: formData.modePaiement || null,
+    };
+
     try {
-      if (editingId) {
-        await updateInscription(editingId, formData);
-        setSuccessMessage("Inscription modifiée avec succès.");
-      } else {
-        await createInscription(formData);
-        setSuccessMessage("Inscription créée avec succès.");
+      const response = editingId
+        ? await updateInscription(editingId, payload)
+        : await createInscription(payload);
+
+      if (response?.status && response.status !== "OK") {
+        setError(response.message || "Impossible d’enregistrer l’inscription.");
+        return;
       }
+
+      setSuccessMessage(
+        editingId
+          ? "Inscription modifiée avec succès."
+          : "Inscription créée avec succès."
+      );
 
       setIsModalOpen(false);
       resetForm();
-      fetchInscriptions();
+      await fetchInscriptions();
     } catch (err) {
+      console.error("Erreur inscription :", err);
       setError(getReadableError(err));
     }
   };
@@ -203,13 +245,14 @@ function InscriptionsPage() {
     <AppLayout>
       <PageHeader
         title="Inscriptions"
-        subtitle="Liste des apprenants inscrits"
+        subtitle="Gestion des apprenants inscrits aux formations"
         action={
           canManageInscriptions ? (
             <button
               style={styles.primaryButton}
               onClick={() => {
                 resetForm();
+                fetchReferenceData();
                 setIsModalOpen(true);
               }}
             >
@@ -233,7 +276,7 @@ function InscriptionsPage() {
 
       {!loading && !error && (
         <>
-          <DataTable columns={columns} data={inscriptions} />
+          <DataTable columns={columns} data={filteredInscriptions} />
           <Pagination metadata={metadata} onPageChange={setPage} />
         </>
       )}
@@ -244,24 +287,50 @@ function InscriptionsPage() {
         onClose={() => setIsModalOpen(false)}
       >
         <form onSubmit={handleSubmit} style={styles.form}>
-          <FormSelect
-            label="Apprenant"
-            name="apprenantId"
-            value={formData.apprenantId}
-            onChange={handleChange}
-            options={apprenantOptions}
-          />
+          <div style={styles.formGrid}>
+            <FormSelect
+              label="Apprenant"
+              name="apprenantId"
+              value={formData.apprenantId}
+              onChange={handleChange}
+              options={apprenantOptions}
+              required
+            />
 
-          <FormSelect
-            label="Formation"
-            name="formationId"
-            value={formData.formationId}
-            onChange={handleChange}
-            options={formationOptions}
-          />
+            <FormSelect
+              label="Formation"
+              name="formationId"
+              value={formData.formationId}
+              onChange={handleChange}
+              options={formationOptions}
+              required
+            />
 
-          <button type="submit" style={styles.primaryButton}>
-            {editingId ? "Mettre à jour" : "Enregistrer"}
+            <FormInput
+              label="Montant"
+              name="montant"
+              type="number"
+              value={formData.montant}
+              onChange={handleChange}
+            />
+
+            <FormSelect
+              label="Mode de paiement"
+              name="modePaiement"
+              value={formData.modePaiement}
+              onChange={handleChange}
+              required
+              options={[
+                { value: "WAVE", label: "WAVE" },
+                { value: "ORANGE_MONEY", label: "ORANGE MONEY" },
+                { value: "ESPECES", label: "ESPÈCES" },
+                { value: "VIREMENT", label: "VIREMENT" },
+              ]}
+            />
+          </div>
+
+          <button type="submit" style={styles.primaryButtonFull}>
+            {editingId ? "Mettre à jour l’inscription" : "Enregistrer l’inscription"}
           </button>
         </form>
       </Modal>
@@ -279,27 +348,49 @@ function InscriptionsPage() {
 
 const styles = {
   toolbar: {
-    marginBottom: "1rem",
+    marginBottom: "1.2rem",
   },
   primaryButton: {
-    backgroundColor: "#2563eb",
+    background: "linear-gradient(135deg, #00798f, #005f70)",
     color: "#fff",
     border: "none",
-    padding: "0.65rem 0.9rem",
-    borderRadius: "8px",
-    fontSize: "0.9rem",
+    padding: "0.85rem 1.1rem",
+    borderRadius: "14px",
+    fontSize: "0.95rem",
+    fontWeight: 900,
+    boxShadow: "0 12px 24px rgba(0,121,143,0.22)",
+  },
+  primaryButtonFull: {
+    background: "linear-gradient(135deg, #00798f, #005f70)",
+    color: "#fff",
+    border: "none",
+    padding: "0.95rem 1rem",
+    borderRadius: "16px",
+    fontSize: "0.95rem",
+    fontWeight: 900,
+    marginTop: "0.4rem",
+    boxShadow: "0 14px 28px rgba(0,121,143,0.25)",
   },
   form: {
     display: "grid",
-    gap: "0.8rem",
+    gap: "1.1rem",
+    overflow: "visible",
+  },
+  formGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "1rem",
+    overflow: "visible",
   },
   success: {
     backgroundColor: "#dcfce7",
     color: "#166534",
-    padding: "0.8rem 1rem",
-    borderRadius: "10px",
+    padding: "0.9rem 1rem",
+    borderRadius: "14px",
     marginBottom: "1rem",
-    fontSize: "0.9rem",
+    fontSize: "0.95rem",
+    fontWeight: 800,
+    border: "1px solid #bbf7d0",
   },
 };
 

@@ -8,8 +8,6 @@ import Pagination from "../components/common/Pagination";
 import SearchBar from "../components/common/SearchBar";
 import Modal from "../components/common/Modal";
 import FormInput from "../components/common/FormInput";
-import FormSelect from "../components/common/FormSelect";
-import StatusBadge from "../components/common/StatusBadge";
 import { getFormations, createFormation } from "../api/formationsApi";
 import { getReadableError } from "../utils/errorHandler";
 import { useAuth } from "../context/AuthContext";
@@ -32,23 +30,22 @@ function FormationsPage() {
     description: "",
     duree: "",
     prix: "",
-    statut: "",
     formateurId: "",
     afficheUrl: "",
   });
 
-  const canManageFormations = hasAnyRole(user, ["ADMIN", "GESTIONNAIRE", "FORMATEUR"]);
+  const canManageFormations = hasAnyRole(user, [
+    "ADMINISTRATEUR",
+    "GESTIONNAIRE",
+    "FORMATEUR",
+  ]);
 
   const columns = [
     { key: "titre", label: "Titre" },
     { key: "description", label: "Description" },
     { key: "duree", label: "Durée" },
     { key: "prix", label: "Prix" },
-    {
-      key: "statut",
-      label: "Statut",
-      render: (row) => <StatusBadge value={row.statut} />,
-    },
+    { key: "formateurNom", label: "Formateur" },
   ];
 
   const fetchFormations = async () => {
@@ -59,16 +56,18 @@ function FormationsPage() {
       const result = await getFormations({
         page,
         size: 10,
-        keyword: search,
       });
 
       const formattedData = result.payload.map((formation) => ({
         id: formation.id,
-        titre: formation.titre,
-        description: formation.description,
-        duree: formation.duree,
-        prix: formation.prix,
-        statut: formation.statut,
+        titre: formation.titre || "-",
+        description: formation.description || "-",
+        duree: formation.duree ? `${formation.duree} h` : "-",
+        prix:
+          formation.prix !== null && formation.prix !== undefined
+            ? `${formation.prix} FCFA`
+            : "-",
+        formateurNom: formation.formateurNom || "-",
       }));
 
       setFormations(formattedData);
@@ -82,7 +81,7 @@ function FormationsPage() {
 
   useEffect(() => {
     fetchFormations();
-  }, [page, search]);
+  }, [page]);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -97,24 +96,55 @@ function FormationsPage() {
       description: "",
       duree: "",
       prix: "",
-      statut: "",
       formateurId: "",
       afficheUrl: "",
     });
   };
+
+  const filteredFormations = formations.filter((item) =>
+  Object.values(item).join(" ").toLowerCase().includes(search.toLowerCase())
+);
 
   const handleCreateFormation = async (e) => {
     e.preventDefault();
     setError("");
     setSuccessMessage("");
 
+    if (
+      !formData.titre.trim() ||
+      !formData.description.trim() ||
+      !formData.duree ||
+      !formData.prix
+    ) {
+      setError("Veuillez remplir les champs obligatoires : titre, description, durée et prix.");
+      return;
+    }
+
+    const payload = {
+      titre: formData.titre.trim(),
+      description: formData.description.trim(),
+      duree: parseInt(formData.duree, 10),
+      prix: parseFloat(formData.prix),
+      formateurId: formData.formateurId
+        ? parseInt(formData.formateurId, 10)
+        : null,
+      afficheUrl: formData.afficheUrl?.trim() || null,
+    };
+
     try {
-      await createFormation(formData);
+      const response = await createFormation(payload);
+
+      if (response?.status && response.status !== "OK") {
+        setError(response.message || "Impossible de créer la formation.");
+        return;
+      }
+
       setSuccessMessage("Formation créée avec succès.");
       setIsModalOpen(false);
       resetForm();
-      fetchFormations();
+      await fetchFormations();
     } catch (err) {
+      console.error("Erreur création formation :", err);
       setError(getReadableError(err));
     }
   };
@@ -126,7 +156,13 @@ function FormationsPage() {
         subtitle="Catalogue des formations disponibles"
         action={
           canManageFormations ? (
-            <button style={styles.primaryButton} onClick={() => setIsModalOpen(true)}>
+            <button
+              style={styles.primaryButton}
+              onClick={() => {
+                resetForm();
+                setIsModalOpen(true);
+              }}
+            >
               + Nouvelle formation
             </button>
           ) : null
@@ -147,7 +183,7 @@ function FormationsPage() {
 
       {!loading && !error && (
         <>
-          <DataTable columns={columns} data={formations} />
+          <DataTable columns={columns} data={filteredFormations} />
           <Pagination metadata={metadata} onPageChange={setPage} />
         </>
       )}
@@ -158,27 +194,59 @@ function FormationsPage() {
         onClose={() => setIsModalOpen(false)}
       >
         <form onSubmit={handleCreateFormation} style={styles.form}>
-          <FormInput label="Titre" name="titre" value={formData.titre} onChange={handleChange} />
-          <FormInput label="Description" name="description" value={formData.description} onChange={handleChange} />
-          <FormInput label="Durée" name="duree" value={formData.duree} onChange={handleChange} />
-          <FormInput label="Prix" name="prix" type="number" value={formData.prix} onChange={handleChange} />
-          <FormInput label="Formateur ID" name="formateurId" value={formData.formateurId} onChange={handleChange} />
-          <FormInput label="Affiche URL" name="afficheUrl" value={formData.afficheUrl} onChange={handleChange} />
-          <FormSelect
-            label="Statut"
-            name="statut"
-            value={formData.statut}
+          <div style={styles.formGrid}>
+            <FormInput
+              label="Titre"
+              name="titre"
+              value={formData.titre}
+              onChange={handleChange}
+              required
+            />
+
+            <FormInput
+              label="Durée en heures"
+              name="duree"
+              type="number"
+              value={formData.duree}
+              onChange={handleChange}
+              required
+            />
+
+            <FormInput
+              label="Prix"
+              name="prix"
+              type="number"
+              value={formData.prix}
+              onChange={handleChange}
+              required
+            />
+
+            <FormInput
+              label="Formateur ID"
+              name="formateurId"
+              type="number"
+              value={formData.formateurId}
+              onChange={handleChange}
+            />
+          </div>
+
+          <FormInput
+            label="Description"
+            name="description"
+            value={formData.description}
             onChange={handleChange}
-            options={[
-              { value: "BROUILLON", label: "BROUILLON" },
-              { value: "PUBLIEE", label: "PUBLIEE" },
-              { value: "TERMINEE", label: "TERMINEE" },
-              { value: "ANNULEE", label: "ANNULEE" },
-            ]}
+            required
           />
 
-          <button type="submit" style={styles.primaryButton}>
-            Enregistrer
+          <FormInput
+            label="Affiche URL"
+            name="afficheUrl"
+            value={formData.afficheUrl}
+            onChange={handleChange}
+          />
+
+          <button type="submit" style={styles.primaryButtonFull}>
+            Enregistrer la formation
           </button>
         </form>
       </Modal>
@@ -188,27 +256,49 @@ function FormationsPage() {
 
 const styles = {
   toolbar: {
-    marginBottom: "1rem",
+    marginBottom: "1.2rem",
   },
   primaryButton: {
-    backgroundColor: "#2563eb",
+    background: "linear-gradient(135deg, #00798f, #005f70)",
     color: "#fff",
     border: "none",
-    padding: "0.65rem 0.9rem",
-    borderRadius: "8px",
-    fontSize: "0.9rem",
+    padding: "0.85rem 1.1rem",
+    borderRadius: "14px",
+    fontSize: "0.95rem",
+    fontWeight: 900,
+    boxShadow: "0 12px 24px rgba(0,121,143,0.22)",
+  },
+  primaryButtonFull: {
+    background: "linear-gradient(135deg, #00798f, #005f70)",
+    color: "#fff",
+    border: "none",
+    padding: "0.95rem 1rem",
+    borderRadius: "16px",
+    fontSize: "0.95rem",
+    fontWeight: 900,
+    marginTop: "0.4rem",
+    boxShadow: "0 14px 28px rgba(0,121,143,0.25)",
   },
   form: {
     display: "grid",
-    gap: "0.8rem",
+    gap: "1.1rem",
+    overflow: "visible",
+  },
+  formGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "1rem",
+    overflow: "visible",
   },
   success: {
     backgroundColor: "#dcfce7",
     color: "#166534",
-    padding: "0.8rem 1rem",
-    borderRadius: "10px",
+    padding: "0.9rem 1rem",
+    borderRadius: "14px",
     marginBottom: "1rem",
-    fontSize: "0.9rem",
+    fontSize: "0.95rem",
+    fontWeight: 800,
+    border: "1px solid #bbf7d0",
   },
 };
 

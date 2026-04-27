@@ -20,27 +20,4 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    const backendError = error?.response?.data;
-
-    if (backendError?.error) {
-      return Promise.reject({
-        status: backendError.status || backendError.error?.status,
-        message:
-          backendError.message ||
-          backendError.error?.message ||
-          "Une erreur backend est survenue.",
-        details: backendError.error,
-      });
-    }
-
-    return Promise.reject({
-      status: "EXCEPTION",
-      message: error.message || "Erreur réseau ou serveur inaccessible.",
-    });
-  }
-);
-
 export default api;

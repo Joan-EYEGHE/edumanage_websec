@@ -5,10 +5,14 @@ function FormInput({
   value,
   onChange,
   placeholder = "",
+  required = false,
 }) {
   return (
     <div style={styles.group}>
-      <label style={styles.label}>{label}</label>
+      <label style={styles.label}>
+        {label} {required && <span style={styles.required}>*</span>}
+      </label>
+
       <input
         style={styles.input}
         type={type}
@@ -16,6 +20,7 @@ function FormInput({
         value={value}
         onChange={onChange}
         placeholder={placeholder}
+        required={required}
       />
     </div>
   );
@@ -25,19 +30,24 @@ const styles = {
   group: {
     display: "flex",
     flexDirection: "column",
-    gap: "0.3rem",
+    gap: "0.45rem",
   },
   label: {
-    fontWeight: 600,
-    color: "#374151",
-    fontSize: "0.85rem",
+    fontWeight: 800,
+    color: "#24464d",
+    fontSize: "0.9rem",
+  },
+  required: {
+    color: "#dc2626",
   },
   input: {
-    padding: "0.65rem 0.75rem",
-    borderRadius: "8px",
-    border: "1px solid #d1d5db",
-    fontSize: "0.9rem",
-    height: "38px",
+    padding: "0.85rem 0.95rem",
+    borderRadius: "14px",
+    border: "1px solid rgba(0,121,143,0.18)",
+    fontSize: "0.95rem",
+    backgroundColor: "#f9feff",
+    color: "#102a30",
+    outline: "none",
   },
 };
 

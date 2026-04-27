@@ -9,7 +9,6 @@ import SearchBar from "../components/common/SearchBar";
 import Modal from "../components/common/Modal";
 import FormInput from "../components/common/FormInput";
 import FormSelect from "../components/common/FormSelect";
-import StatusBadge from "../components/common/StatusBadge";
 import ConfirmDialog from "../components/common/ConfirmDialog";
 import RowActions from "../components/common/RowActions";
 import {
@@ -47,18 +46,29 @@ function PaiementsPage() {
     referenceTransaction: "",
   });
 
-  const canManagePaiements = hasAnyRole(user, ["ADMIN", "GESTIONNAIRE"]);
+  const canManagePaiements = hasAnyRole(user, [
+    "ADMINISTRATEUR",
+    "GESTIONNAIRE",
+  ]);
+
+  const formatDate = (value) => {
+    if (!value) return "-";
+    const text = String(value);
+
+    if (text.includes("-")) return text;
+
+    if (text.length === 8) {
+      return `${text.slice(0, 4)}-${text.slice(4, 6)}-${text.slice(6, 8)}`;
+    }
+
+    return text;
+  };
 
   const columns = [
     { key: "apprenantNom", label: "Apprenant" },
     { key: "montant", label: "Montant" },
     { key: "modePaiement", label: "Mode de paiement" },
     { key: "referenceTransaction", label: "Référence" },
-    {
-      key: "statut",
-      label: "Statut",
-      render: (row) => <StatusBadge value={row.statut} />,
-    },
     { key: "datePaiement", label: "Date" },
     {
       key: "actions",
@@ -81,18 +91,19 @@ function PaiementsPage() {
       const result = await getPaiements({
         page,
         size: 10,
-        keyword: search,
       });
 
       const formattedData = result.payload.map((paiement) => ({
         id: paiement.id,
         inscriptionId: paiement.inscriptionId,
-        apprenantNom: paiement.apprenantNom,
-        montant: paiement.montant,
-        modePaiement: paiement.modePaiement,
-        referenceTransaction: paiement.referenceTransaction,
-        statut: paiement.statut,
-        datePaiement: paiement.datePaiement,
+        apprenantNom: paiement.apprenantNom || "-",
+        montant:
+          paiement.montant !== null && paiement.montant !== undefined
+            ? `${paiement.montant} FCFA`
+            : "-",
+        modePaiement: paiement.modePaiement || "-",
+        referenceTransaction: paiement.referenceTransaction || "-",
+        datePaiement: formatDate(paiement.datePaiement),
       }));
 
       setPaiements(formattedData);
@@ -104,24 +115,30 @@ function PaiementsPage() {
     }
   };
 
+  const filteredPaiements = paiements.filter((item) =>
+  Object.values(item).join(" ").toLowerCase().includes(search.toLowerCase())
+);
+
   const fetchReferenceData = async () => {
     try {
       const result = await getInscriptions({ page: 0, size: 100 });
 
       const options = result.payload.map((item) => ({
         value: item.id,
-        label: `${item.apprenantNom} - ${item.formationTitre}`,
+        label: `${item.apprenantNom || "Apprenant"} - ${
+          item.formationTitre || "Formation"
+        }`,
       }));
 
       setInscriptionOptions(options);
     } catch (err) {
-      console.error(err);
+      console.error("Erreur chargement inscriptions :", err);
     }
   };
 
   useEffect(() => {
     fetchPaiements();
-  }, [page, search]);
+  }, [page]);
 
   useEffect(() => {
     fetchReferenceData();
@@ -146,12 +163,15 @@ function PaiementsPage() {
 
   const handleEdit = (row) => {
     setEditingId(row.id);
+
     setFormData({
       inscriptionId: row.inscriptionId || "",
-      montant: row.montant || "",
-      modePaiement: row.modePaiement || "",
-      referenceTransaction: row.referenceTransaction || "",
+      montant: String(row.montant || "").replace(" FCFA", ""),
+      modePaiement: row.modePaiement === "-" ? "" : row.modePaiement || "",
+      referenceTransaction:
+        row.referenceTransaction === "-" ? "" : row.referenceTransaction || "",
     });
+
     setIsModalOpen(true);
   };
 
@@ -166,7 +186,7 @@ function PaiementsPage() {
       setSuccessMessage("Paiement supprimé avec succès.");
       setIsConfirmOpen(false);
       setSelectedItemId(null);
-      fetchPaiements();
+      await fetchPaiements();
     } catch (err) {
       setError(getReadableError(err));
     }
@@ -177,19 +197,45 @@ function PaiementsPage() {
     setError("");
     setSuccessMessage("");
 
+    if (
+      !formData.inscriptionId ||
+      !formData.montant ||
+      !formData.modePaiement ||
+      !formData.referenceTransaction.trim()
+    ) {
+      setError("Veuillez remplir tous les champs obligatoires du paiement.");
+      return;
+    }
+
+    const payload = {
+      inscriptionId: parseInt(formData.inscriptionId, 10),
+      montant: parseFloat(formData.montant),
+      modePaiement: formData.modePaiement,
+      referenceTransaction: formData.referenceTransaction.trim(),
+      datePaiement: new Date().toISOString().split("T")[0],
+    };
+
     try {
-      if (editingId) {
-        await updatePaiement(editingId, formData);
-        setSuccessMessage("Paiement modifié avec succès.");
-      } else {
-        await createPaiement(formData);
-        setSuccessMessage("Paiement créé avec succès.");
+      const response = editingId
+        ? await updatePaiement(editingId, payload)
+        : await createPaiement(payload);
+
+      if (response?.status && response.status !== "OK") {
+        setError(response.message || "Impossible d’enregistrer le paiement.");
+        return;
       }
+
+      setSuccessMessage(
+        editingId
+          ? "Paiement modifié avec succès."
+          : "Paiement créé avec succès."
+      );
 
       setIsModalOpen(false);
       resetForm();
-      fetchPaiements();
+      await fetchPaiements();
     } catch (err) {
+      console.error("Erreur paiement :", err);
       setError(getReadableError(err));
     }
   };
@@ -198,13 +244,14 @@ function PaiementsPage() {
     <AppLayout>
       <PageHeader
         title="Paiements"
-        subtitle="Suivi des transactions et paiements"
+        subtitle="Suivi sécurisé des transactions"
         action={
           canManagePaiements ? (
             <button
               style={styles.primaryButton}
               onClick={() => {
                 resetForm();
+                fetchReferenceData();
                 setIsModalOpen(true);
               }}
             >
@@ -228,7 +275,7 @@ function PaiementsPage() {
 
       {!loading && !error && (
         <>
-          <DataTable columns={columns} data={paiements} />
+          <DataTable columns={columns} data={filteredPaiements} />
           <Pagination metadata={metadata} onPageChange={setPage} />
         </>
       )}
@@ -239,44 +286,50 @@ function PaiementsPage() {
         onClose={() => setIsModalOpen(false)}
       >
         <form onSubmit={handleSubmit} style={styles.form}>
-          <FormSelect
-            label="Inscription"
-            name="inscriptionId"
-            value={formData.inscriptionId}
-            onChange={handleChange}
-            options={inscriptionOptions}
-          />
+          <div style={styles.formGrid}>
+            <FormSelect
+              label="Inscription"
+              name="inscriptionId"
+              value={formData.inscriptionId}
+              onChange={handleChange}
+              options={inscriptionOptions}
+              required
+            />
 
-          <FormInput
-            label="Montant"
-            name="montant"
-            type="number"
-            value={formData.montant}
-            onChange={handleChange}
-          />
+            <FormInput
+              label="Montant"
+              name="montant"
+              type="number"
+              value={formData.montant}
+              onChange={handleChange}
+              required
+            />
 
-          <FormSelect
-            label="Mode de paiement"
-            name="modePaiement"
-            value={formData.modePaiement}
-            onChange={handleChange}
-            options={[
-              { value: "WAVE", label: "WAVE" },
-              { value: "ORANGE_MONEY", label: "ORANGE_MONEY" },
-              { value: "ESPECES", label: "ESPECES" },
-              { value: "VIREMENT", label: "VIREMENT" },
-            ]}
-          />
+            <FormSelect
+              label="Mode de paiement"
+              name="modePaiement"
+              value={formData.modePaiement}
+              onChange={handleChange}
+              required
+              options={[
+                { value: "WAVE", label: "WAVE" },
+                { value: "ORANGE_MONEY", label: "ORANGE MONEY" },
+                { value: "ESPECES", label: "ESPÈCES" },
+                { value: "VIREMENT", label: "VIREMENT" },
+              ]}
+            />
 
-          <FormInput
-            label="Référence transaction"
-            name="referenceTransaction"
-            value={formData.referenceTransaction}
-            onChange={handleChange}
-          />
+            <FormInput
+              label="Référence transaction"
+              name="referenceTransaction"
+              value={formData.referenceTransaction}
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-          <button type="submit" style={styles.primaryButton}>
-            {editingId ? "Mettre à jour" : "Enregistrer"}
+          <button type="submit" style={styles.primaryButtonFull}>
+            {editingId ? "Mettre à jour le paiement" : "Enregistrer le paiement"}
           </button>
         </form>
       </Modal>
@@ -294,27 +347,49 @@ function PaiementsPage() {
 
 const styles = {
   toolbar: {
-    marginBottom: "1rem",
+    marginBottom: "1.2rem",
   },
   primaryButton: {
-    backgroundColor: "#2563eb",
+    background: "linear-gradient(135deg, #00798f, #005f70)",
     color: "#fff",
     border: "none",
-    padding: "0.65rem 0.9rem",
-    borderRadius: "8px",
-    fontSize: "0.9rem",
+    padding: "0.85rem 1.1rem",
+    borderRadius: "14px",
+    fontSize: "0.95rem",
+    fontWeight: 900,
+    boxShadow: "0 12px 24px rgba(0,121,143,0.22)",
+  },
+  primaryButtonFull: {
+    background: "linear-gradient(135deg, #00798f, #005f70)",
+    color: "#fff",
+    border: "none",
+    padding: "0.95rem 1rem",
+    borderRadius: "16px",
+    fontSize: "0.95rem",
+    fontWeight: 900,
+    marginTop: "0.4rem",
+    boxShadow: "0 14px 28px rgba(0,121,143,0.25)",
   },
   form: {
     display: "grid",
-    gap: "0.8rem",
+    gap: "1.1rem",
+    overflow: "visible",
+  },
+  formGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "1rem",
+    overflow: "visible",
   },
   success: {
     backgroundColor: "#dcfce7",
     color: "#166534",
-    padding: "0.8rem 1rem",
-    borderRadius: "10px",
+    padding: "0.9rem 1rem",
+    borderRadius: "14px",
     marginBottom: "1rem",
-    fontSize: "0.9rem",
+    fontSize: "0.95rem",
+    fontWeight: 800,
+    border: "1px solid #bbf7d0",
   },
 };
 

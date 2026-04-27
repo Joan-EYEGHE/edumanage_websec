@@ -1,9 +1,26 @@
-function FormSelect({ label, name, value, onChange, options = [] }) {
+function FormSelect({
+  label,
+  name,
+  value,
+  onChange,
+  options = [],
+  required = false,
+}) {
   return (
     <div style={styles.group}>
-      <label style={styles.label}>{label}</label>
-      <select style={styles.select} name={name} value={value} onChange={onChange}>
+      <label style={styles.label}>
+        {label} {required && <span style={styles.required}>*</span>}
+      </label>
+
+      <select
+        style={styles.select}
+        name={name}
+        value={value}
+        onChange={onChange}
+        required={required}
+      >
         <option value="">Sélectionner</option>
+
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
@@ -18,20 +35,24 @@ const styles = {
   group: {
     display: "flex",
     flexDirection: "column",
-    gap: "0.3rem",
+    gap: "0.45rem",
   },
   label: {
-    fontWeight: 600,
-    color: "#374151",
-    fontSize: "0.85rem",
+    fontWeight: 800,
+    color: "#24464d",
+    fontSize: "0.9rem",
+  },
+  required: {
+    color: "#dc2626",
   },
   select: {
-    padding: "0.65rem 0.75rem",
-    borderRadius: "8px",
-    border: "1px solid #d1d5db",
-    backgroundColor: "#fff",
-    fontSize: "0.9rem",
-    height: "38px",
+    padding: "0.85rem 0.95rem",
+    borderRadius: "14px",
+    border: "1px solid rgba(0,121,143,0.18)",
+    backgroundColor: "#f9feff",
+    color: "#102a30",
+    fontSize: "0.95rem",
+    outline: "none",
   },
 };
 

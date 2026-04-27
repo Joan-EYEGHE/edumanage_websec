@@ -3,14 +3,14 @@ export const extractPayload = (response) => {
 };
 
 export const extractMetadata = (response) => {
-  return (
-    response?.data?.metadata ?? {
-      number: 0,
-      totalElements: 0,
-      size: 0,
-      totalPages: 0,
-    }
-  );
+  const metadata = response?.data?.metadata ?? {};
+
+  return {
+    number: metadata.number ?? metadata.currentPage ?? 0,
+    totalElements: metadata.totalElements ?? 0,
+    size: metadata.size ?? 10,
+    totalPages: metadata.totalPages ?? 0,
+  };
 };
 
 export const extractMessage = (response) => {

@@ -5,11 +5,16 @@ function Modal({ isOpen, title, onClose, children }) {
     <div style={styles.overlay}>
       <div style={styles.modal}>
         <div style={styles.header}>
-          <h2 style={styles.title}>{title}</h2>
+          <div>
+            <p style={styles.kicker}>EduManage</p>
+            <h2 style={styles.title}>{title}</h2>
+          </div>
+
           <button onClick={onClose} style={styles.closeButton}>
             ×
           </button>
         </div>
+
         <div style={styles.content}>{children}</div>
       </div>
     </div>
@@ -20,7 +25,8 @@ const styles = {
   overlay: {
     position: "fixed",
     inset: 0,
-    backgroundColor: "rgba(0,0,0,0.35)",
+    backgroundColor: "rgba(0, 38, 45, 0.42)",
+    backdropFilter: "blur(6px)",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
@@ -29,42 +35,49 @@ const styles = {
   },
   modal: {
     width: "100%",
-    maxWidth: "420px",
-    maxHeight: "85vh",
-    overflowY: "auto",
-    backgroundColor: "#fff",
-    borderRadius: "12px",
-    padding: "1rem 1rem 1.2rem",
-    boxShadow: "0 12px 30px rgba(0,0,0,0.18)",
+    maxWidth: "760px",
+    maxHeight: "none",
+    backgroundColor: "rgba(255,255,255,0.98)",
+    borderRadius: "26px",
+    padding: "1.5rem",
+    border: "1px solid rgba(0,121,143,0.14)",
+    boxShadow: "0 30px 80px rgba(0,121,143,0.24)",
   },
   header: {
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "0.8rem",
+    alignItems: "flex-start",
+    marginBottom: "1rem",
+  },
+  kicker: {
+    color: "#00798f",
+    fontSize: "0.75rem",
+    fontWeight: 900,
+    letterSpacing: "1.4px",
+    textTransform: "uppercase",
+    marginBottom: "0.2rem",
   },
   title: {
-    fontSize: "1rem",
+    fontSize: "1.35rem",
     margin: 0,
-    color: "#111827",
+    color: "#102a30",
   },
   closeButton: {
-    background: "#f3f4f6",
-    border: "none",
-    width: "30px",
-    height: "30px",
-    borderRadius: "50%",
-    fontSize: "1rem",
+    background: "#f5feff",
+    border: "1px solid rgba(0,121,143,0.16)",
+    width: "38px",
+    height: "38px",
+    borderRadius: "14px",
+    fontSize: "1.3rem",
     fontWeight: "bold",
-    cursor: "pointer",
-    color: "#374151",
+    color: "#00798f",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
     lineHeight: 1,
   },
   content: {
-    marginTop: "0.4rem",
+    marginTop: "0.5rem",
   },
 };
 

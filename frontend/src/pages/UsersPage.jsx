@@ -33,10 +33,10 @@ function UsersPage() {
     email: "",
     telephone: "",
     password: "",
-    role: [],
+    roles: [],
   });
 
-  const canManageUsers = hasAnyRole(user, ["ADMIN", "GESTIONNAIRE"]);
+  const canManageUsers = hasAnyRole(user, ["ADMINISTRATEUR", "GESTIONNAIRE"]);
 
   const columns = [
     { key: "nom", label: "Nom" },
@@ -59,16 +59,15 @@ function UsersPage() {
       const result = await getUsers({
         page,
         size: 10,
-        keyword: search,
       });
 
       const formattedData = result.payload.map((userItem) => ({
         id: userItem.id,
-        nom: userItem.nom,
-        prenom: userItem.prenom,
-        email: userItem.email,
-        telephone: userItem.telephone,
-        roles: Array.isArray(userItem.roles) ? userItem.roles.join(", ") : "",
+        nom: userItem.nom || "-",
+        prenom: userItem.prenom || "-",
+        email: userItem.email || "-",
+        telephone: userItem.telephone || "-",
+        roles: Array.isArray(userItem.roles) ? userItem.roles.join(", ") : "-",
         actif: userItem.actif,
       }));
 
@@ -83,24 +82,24 @@ function UsersPage() {
 
   useEffect(() => {
     fetchUsers();
-  }, [page, search]);
+  }, [page]);
 
   const handleChange = (e) => {
-  const { name, value } = e.target;
+    const { name, value } = e.target;
 
-  if (name === "roles") {
+    if (name === "roles") {
+      setFormData((prev) => ({
+        ...prev,
+        roles: value ? [value] : [],
+      }));
+      return;
+    }
+
     setFormData((prev) => ({
       ...prev,
-      roles: value ? [value] : [],
+      [name]: value,
     }));
-    return;
-  }
-
-  setFormData((prev) => ({
-    ...prev,
-    [name]: value,
-  }));
-};
+  };
 
   const resetForm = () => {
     setFormData({
@@ -109,34 +108,76 @@ function UsersPage() {
       email: "",
       telephone: "",
       password: "",
-      role: [],
+      roles: [],
     });
   };
 
-  const handleCreateUser = async (e) => {
-    e.preventDefault();
-    setError("");
-    setSuccessMessage("");
+   const filteredUsers = users.filter((item) =>
+  Object.values(item).join(" ").toLowerCase().includes(search.toLowerCase())
+);
 
-    try {
-      await createUser(formData);
-      setSuccessMessage("Utilisateur créé avec succès.");
-      setIsModalOpen(false);
-      resetForm();
-      fetchUsers();
-    } catch (err) {
-      setError(getReadableError(err));
-    }
+  const handleCreateUser = async (e) => {
+  e.preventDefault();
+  setError("");
+  setSuccessMessage("");
+
+  if (
+    !formData.nom.trim() ||
+    !formData.prenom.trim() ||
+    !formData.email.trim() ||
+    !formData.telephone.trim() ||
+    !formData.password.trim() ||
+    formData.roles.length === 0
+  ) {
+    setError("Veuillez remplir tous les champs obligatoires.");
+    return;
+  }
+
+  const payload = {
+    nom: formData.nom.trim(),
+    prenom: formData.prenom.trim(),
+    email: formData.email.trim(),
+    telephone: formData.telephone.trim(),
+    password: formData.password,
+    roles: formData.roles,
+    actif: true,
+    statut: "ACTIF",
   };
+
+ 
+
+  try {
+    const response = await createUser(payload);
+
+    if (response?.status && response.status !== "OK") {
+      setError(response.message || "Impossible de créer l’utilisateur.");
+      return;
+    }
+
+    setSuccessMessage("Utilisateur créé avec succès.");
+    setIsModalOpen(false);
+    resetForm();
+    await fetchUsers();
+  } catch (err) {
+    console.error("Erreur création utilisateur :", err);
+    setError(getReadableError(err));
+  }
+};
 
   return (
     <AppLayout>
       <PageHeader
         title="Utilisateurs"
-        subtitle="Liste des comptes utilisateurs"
+        subtitle="Gestion des comptes et rôles utilisateurs"
         action={
           canManageUsers ? (
-            <button style={styles.primaryButton} onClick={() => setIsModalOpen(true)}>
+            <button
+              style={styles.primaryButton}
+              onClick={() => {
+                resetForm();
+                setIsModalOpen(true);
+              }}
+            >
               + Nouvel utilisateur
             </button>
           ) : null
@@ -157,7 +198,7 @@ function UsersPage() {
 
       {!loading && !error && (
         <>
-          <DataTable columns={columns} data={users} />
+          <DataTable columns={columns} data={filteredUsers} />
           <Pagination metadata={metadata} onPageChange={setPage} />
         </>
       )}
@@ -168,24 +209,64 @@ function UsersPage() {
         onClose={() => setIsModalOpen(false)}
       >
         <form onSubmit={handleCreateUser} style={styles.form}>
-          <FormInput label="Nom" name="nom" value={formData.nom} onChange={handleChange} />
-          <FormInput label="Prénom" name="prenom" value={formData.prenom} onChange={handleChange} />
-          <FormInput label="Email" name="email" type="email" value={formData.email} onChange={handleChange} />
-          <FormInput label="Téléphone" name="telephone" value={formData.telephone} onChange={handleChange} />
-          <FormInput label="Mot de passe" name="password" type="password" value={formData.password} onChange={handleChange} />
-          <FormSelect
-  label="Rôle"
-  name="roles"
-  value={formData.roles[0] || ""}
-  onChange={handleChange}
-  options={[
-    { value: "FORMATEUR", label: "FORMATEUR" },
-    { value: "APPRENANT", label: "APPRENANT" },
-  ]}
-/>
+          <div style={styles.formGrid}>
+            <FormInput
+              label="Nom"
+              name="nom"
+              value={formData.nom}
+              onChange={handleChange}
+              required
+            />
 
-          <button type="submit" style={styles.primaryButton}>
-            Enregistrer
+            <FormInput
+              label="Prénom"
+              name="prenom"
+              value={formData.prenom}
+              onChange={handleChange}
+              required
+            />
+
+            <FormInput
+              label="Email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
+
+            <FormInput
+              label="Téléphone"
+              name="telephone"
+              value={formData.telephone}
+              onChange={handleChange}
+              required
+            />
+
+            <FormInput
+              label="Mot de passe"
+              name="password"
+              type="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+
+            <FormSelect
+              label="Rôle"
+              name="roles"
+              value={formData.roles?.[0] || ""}
+              onChange={handleChange}
+              required
+              options={[
+                { value: "FORMATEUR", label: "FORMATEUR" },
+                { value: "APPRENANT", label: "APPRENANT" },
+              ]}
+            />
+          </div>
+
+          <button type="submit" style={styles.primaryButtonFull}>
+            Enregistrer l’utilisateur
           </button>
         </form>
       </Modal>
@@ -195,30 +276,52 @@ function UsersPage() {
 
 const styles = {
   toolbar: {
-    marginBottom: "1rem",
+    marginBottom: "1.2rem",
     display: "flex",
     justifyContent: "space-between",
     gap: "1rem",
   },
   primaryButton: {
-    backgroundColor: "#2563eb",
+    background: "linear-gradient(135deg, #00798f, #005f70)",
     color: "#fff",
     border: "none",
-    padding: "0.65rem 0.9rem",
-    borderRadius: "8px",
-    fontSize: "0.9rem",
+    padding: "0.85rem 1.1rem",
+    borderRadius: "14px",
+    fontSize: "0.95rem",
+    fontWeight: 900,
+    boxShadow: "0 12px 24px rgba(0,121,143,0.22)",
+  },
+  primaryButtonFull: {
+    background: "linear-gradient(135deg, #00798f, #005f70)",
+    color: "#fff",
+    border: "none",
+    padding: "0.95rem 1rem",
+    borderRadius: "16px",
+    fontSize: "0.95rem",
+    fontWeight: 900,
+    marginTop: "0.4rem",
+    boxShadow: "0 14px 28px rgba(0,121,143,0.25)",
   },
   form: {
-    display: "grid",
-    gap: "0.8rem",
-  },
+  display: "grid",
+  gap: "1.1rem",
+  overflow: "visible",
+},
+  formGrid: {
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr",
+  gap: "1rem",
+  overflow: "visible",
+},
   success: {
     backgroundColor: "#dcfce7",
     color: "#166534",
-    padding: "0.8rem 1rem",
-    borderRadius: "10px",
+    padding: "0.9rem 1rem",
+    borderRadius: "14px",
     marginBottom: "1rem",
-    fontSize: "0.9rem",
+    fontSize: "0.95rem",
+    fontWeight: 800,
+    border: "1px solid #bbf7d0",
   },
 };
 
