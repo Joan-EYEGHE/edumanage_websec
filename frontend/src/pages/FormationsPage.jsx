@@ -125,9 +125,7 @@ function FormationsPage() {
       description: formData.description.trim(),
       duree: parseInt(formData.duree, 10),
       prix: parseFloat(formData.prix),
-      formateurId: formData.formateurId
-        ? parseInt(formData.formateurId, 10)
-        : null,
+      formateurId: parseInt(formData.formateurId || user.id, 10),
       afficheUrl: formData.afficheUrl?.trim() || null,
     };
 
@@ -225,7 +223,7 @@ function FormationsPage() {
               label="Formateur ID"
               name="formateurId"
               type="number"
-              value={formData.formateurId}
+              value={user.id || formData.formateurId}
               onChange={handleChange}
             />
           </div>

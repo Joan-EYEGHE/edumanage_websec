@@ -8,7 +8,7 @@ import {
 
 export const getAuditLogs = async (params = {}) => {
   const response = await api.get("/audit-logs/all", { params });
-
+  
   return {
     payload: extractPayload(response),
     metadata: extractMetadata(response),
