@@ -30,6 +30,9 @@ springdoc:
   swagger-ui:
     enabled: true
     path: /swagger-ui.html
+
+
+
 ---
 spring:
   config:

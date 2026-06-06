@@ -33,6 +33,6 @@ build/
 .vscode/
 
 
-### Autres ### 
+### Projets ###
 .note/
-.env
+src/main/resources/application-dev.yml
