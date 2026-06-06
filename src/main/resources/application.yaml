@@ -31,8 +31,17 @@ springdoc:
     enabled: true
     path: /swagger-ui.html
 
-
-
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: prometheus,health
+  endpoint:
+    prometheus:
+      enabled: true
+    health:
+      enabled: true
 ---
 spring:
   config:
