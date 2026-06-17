@@ -35,6 +35,7 @@ build/
 
 ### Projets ###
 .note/
+CLAUDE.md
 src/main/resources/application-dev.yml
 src/main/resources/application-prod.yml
 public/token/token.json
