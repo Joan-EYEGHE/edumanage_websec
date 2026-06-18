@@ -3,6 +3,7 @@ package ism.dakar.edumanage.api.controllers.impls;
 import ism.dakar.edumanage.api.controllers.interfaces.IUserRestController;
 import ism.dakar.edumanage.api.mappers.UserMapper;
 import ism.dakar.edumanage.api.modeles.UserDto;
+import ism.dakar.edumanage.security.datas.enums.Role;
 import ism.dakar.edumanage.security.api.models.AppUserDto;
 import ism.dakar.edumanage.security.api.models.LoginDto;
 import ism.dakar.edumanage.security.api.models.Response;
@@ -14,6 +15,7 @@ import ism.dakar.edumanage.services.interfaces.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -71,6 +73,7 @@ public class UserRestControllerImpls implements IUserRestController {
     }
 
     @Override
+    @PreAuthorize("hasAuthority('" + Role.Constants.ADMINISTRATEUR + "')")
     public Response<Object> create(UserDto dtoRequest) {
         try {
             var dto_ = service.create(dtoRequest);
@@ -83,6 +86,7 @@ public class UserRestControllerImpls implements IUserRestController {
     }
 
     @Override
+    @PreAuthorize("hasAuthority('" + Role.Constants.ADMINISTRATEUR + "')")
     public Response<Object> update(Long id, UserDto dto) {
         dto.setId(id);
         try {
@@ -96,11 +100,13 @@ public class UserRestControllerImpls implements IUserRestController {
     }
 
     @Override
+    @PreAuthorize("hasAuthority('" + Role.Constants.ADMINISTRATEUR + "')")
     public Response<Object> get(Long id) {
         return null;
     }
 
     @Override
+    @PreAuthorize("hasAuthority('" + Role.Constants.ADMINISTRATEUR + "')")
     public Response<Object> getAll(Map<String, String> searchParams, Pageable pageable) {
         var page = service.getAll(searchParams, pageable);
         Response.PageMetadata metadata = Response.PageMetadata.builder()
@@ -113,18 +119,21 @@ public class UserRestControllerImpls implements IUserRestController {
     }
 
     @Override
+    @PreAuthorize("hasAuthority('" + Role.Constants.ADMINISTRATEUR + "')")
     public Response<Object> getAllList(Map<String, String> searchParams) {
         var datas = service.getAll(searchParams);
         return Response.ok().setPayload(datas);
     }
 
     @Override
+    @PreAuthorize("hasAuthority('" + Role.Constants.ADMINISTRATEUR + "')")
     public Response<Object> countAll(Map<String, String> searchParams) {
         var nbr = service.countAll(searchParams);
         return Response.ok().setPayload(nbr);
     }
 
     @Override
+    @PreAuthorize("hasAuthority('" + Role.Constants.ADMINISTRATEUR + "')")
     public Response<Object> delete(Long id) {
         return null;
     }

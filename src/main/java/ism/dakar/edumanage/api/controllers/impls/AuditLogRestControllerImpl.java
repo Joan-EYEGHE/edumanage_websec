@@ -6,12 +6,14 @@ import java.util.Map;
 import ism.dakar.edumanage.api.modeles.AuditLogResponseDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import ism.dakar.edumanage.api.controllers.interfaces.IAuditLogRestController;
 import ism.dakar.edumanage.security.api.models.Response;
+import ism.dakar.edumanage.security.datas.enums.Role;
 import ism.dakar.edumanage.services.interfaces.AuditLogService;
 import lombok.RequiredArgsConstructor;
 
@@ -19,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/audit-logs")
 @CrossOrigin("*")
 @RequiredArgsConstructor
+@PreAuthorize("hasAuthority('" + Role.Constants.ADMINISTRATEUR + "')")
 public class AuditLogRestControllerImpl implements IAuditLogRestController {
 
     private final AuditLogService logService;
