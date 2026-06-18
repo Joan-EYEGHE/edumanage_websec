@@ -6,6 +6,7 @@ import FormationsPage from "../pages/FormationsPage";
 import InscriptionsPage from "../pages/InscriptionsPage";
 import PaiementsPage from "../pages/PaiementsPage";
 import AuditLogsPage from "../pages/AuditLogsPage";
+import ForbiddenPage from "../pages/ForbiddenPage";
 import ProtectedRoute from "../components/common/ProtectedRoute";
 
 function AppRouter() {
@@ -65,6 +66,15 @@ function AppRouter() {
           element={
             <ProtectedRoute>
               <AuditLogsPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/forbidden"
+          element={
+            <ProtectedRoute>
+              <ForbiddenPage />
             </ProtectedRoute>
           }
         />
