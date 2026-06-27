@@ -29,13 +29,13 @@ function Sidebar() {
     label: "Utilisateurs",
     path: "/users",
     icon: "👤",
-    visible: hasAnyRole(user, ["ADMINISTRATEUR", "GESTIONNAIRE"]),
+    visible: hasAnyRole(user, ["ADMINISTRATEUR"]),
   },
   {
     label: "Formations",
     path: "/formations",
     icon: "🎓",
-    visible: hasAnyRole(user, ["ADMINISTRATEUR", "GESTIONNAIRE", "FORMATEUR"]),
+    visible: hasAnyRole(user, ["ADMINISTRATEUR", "GESTIONNAIRE", "FORMATEUR", "APPRENANT"]),
   },
   {
     label: "Inscriptions",

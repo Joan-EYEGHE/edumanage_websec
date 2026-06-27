@@ -33,11 +33,6 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    if (status === 403) {
-      window.location.href = "/forbidden";
-      return Promise.reject(error);
-    }
-
     return Promise.reject(error);
   }
 );

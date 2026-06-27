@@ -19,7 +19,7 @@ function AppRouter() {
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["ADMINISTRATEUR", "GESTIONNAIRE", "FORMATEUR", "APPRENANT"]}>
               <DashboardPage />
             </ProtectedRoute>
           }
@@ -28,7 +28,7 @@ function AppRouter() {
         <Route
           path="/users"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["ADMINISTRATEUR"]}>
               <UsersPage />
             </ProtectedRoute>
           }
@@ -37,7 +37,7 @@ function AppRouter() {
         <Route
           path="/formations"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["ADMINISTRATEUR", "GESTIONNAIRE", "FORMATEUR", "APPRENANT"]}>
               <FormationsPage />
             </ProtectedRoute>
           }
@@ -46,7 +46,7 @@ function AppRouter() {
         <Route
           path="/inscriptions"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["ADMINISTRATEUR", "GESTIONNAIRE", "FORMATEUR"]}>
               <InscriptionsPage />
             </ProtectedRoute>
           }
@@ -55,7 +55,7 @@ function AppRouter() {
         <Route
           path="/paiements"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["ADMINISTRATEUR", "GESTIONNAIRE"]}>
               <PaiementsPage />
             </ProtectedRoute>
           }
@@ -64,7 +64,7 @@ function AppRouter() {
         <Route
           path="/audit-logs"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={["ADMINISTRATEUR"]}>
               <AuditLogsPage />
             </ProtectedRoute>
           }
