@@ -1,4 +1,5 @@
 import axios from "axios";
+import { clearAuthData } from "../utils/auth";
 
 const api = axios.create({
   baseURL: "http://localhost:8082/api",
@@ -18,6 +19,27 @@ api.interceptors.request.use(
     return config;
   },
   (error) => Promise.reject(error)
+);
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error.response?.status;
+    const url = error.config?.url;
+
+    if (status === 401 && url !== "/users/login") {
+      clearAuthData();
+      window.location.href = "/login";
+      return Promise.reject(error);
+    }
+
+    if (status === 403) {
+      window.location.href = "/forbidden";
+      return Promise.reject(error);
+    }
+
+    return Promise.reject(error);
+  }
 );
 
 export default api;
