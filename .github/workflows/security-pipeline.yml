@@ -3,13 +3,10 @@ name: EduManage - Security Pipeline
 on:
   push:
     branches:
-      - back
-      - frontend-integration
       - websec
   pull_request:
     branches:
-      - back
-      - frontend-integration
+      - websec
 
 jobs:
 
