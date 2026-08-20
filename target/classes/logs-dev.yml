@@ -1,0 +1,8 @@
+logging:
+  level:
+    root: INFO
+    ism.dakar.edumanage: DEBUG
+    org.hibernate.SQL: off
+
+  pattern:
+    console: "%d{dd:MM:YYYY} %d{HH:mm:ss} %highlight(%-5level) [%X{user}] %magenta([%thread]) %cyan(%logger{15}) : %msg%n"
