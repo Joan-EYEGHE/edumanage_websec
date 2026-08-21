@@ -40,3 +40,4 @@ src/main/resources/application-prod.yml
 public/token/token.json
 package-lock.json
 /z-reponse-claude
+src/main/resources/bootstrap.yml
