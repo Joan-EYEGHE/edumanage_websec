@@ -30,6 +30,8 @@
 		<java.version>21</java.version>
 		<querydsl.version>5.0.0</querydsl.version>
 		<mapstruct.version>1.4.2.Final</mapstruct.version>
+		<!-- Tags JUnit exclus de `mvn test` ; vidé par le profil selenium-tests -->
+		<excluded.groups>selenium</excluded.groups>
 	</properties>
 
 	<dependencies>
@@ -147,6 +149,22 @@
 			<scope>provided</scope>
 		</dependency>
 
+		<!-- Selenium WebDriver — pilote le navigateur -->
+		<dependency>
+			<groupId>org.seleniumhq.selenium</groupId>
+			<artifactId>selenium-java</artifactId>
+			<version>4.47.0</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- WebDriverManager — télécharge le driver Chrome automatiquement -->
+		<dependency>
+			<groupId>io.github.bonigarcia</groupId>
+			<artifactId>webdrivermanager</artifactId>
+			<version>6.3.4</version>
+			<scope>test</scope>
+		</dependency>		
+
 	</dependencies>
 
 	<build>
@@ -192,6 +210,13 @@
 				</configuration>
 			</plugin>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<excludedGroups>${excluded.groups}</excludedGroups>
+				</configuration>
+			</plugin>
+			<plugin>
 				<groupId>com.mysema.maven</groupId>
 				<artifactId>apt-maven-plugin</artifactId>
 				<version>1.1.3</version>
@@ -231,5 +256,22 @@
 			</releases>
 		</pluginRepository>
 	</pluginRepositories>
+
+	<profiles>
+		<!-- Activé automatiquement par `mvn test -Dgroups=selenium` : lève l'exclusion
+		     du tag, sans quoi le filtre d'exclusion JUnit l'emporterait sur l'inclusion. -->
+		<profile>
+			<id>selenium-tests</id>
+			<activation>
+				<property>
+					<name>groups</name>
+					<value>selenium</value>
+				</property>
+			</activation>
+			<properties>
+				<excluded.groups></excluded.groups>
+			</properties>
+		</profile>
+	</profiles>
 
 </project>
